@@ -335,7 +335,7 @@ list."
 
 (defcustom org-taskjuggler-valid-resource-attributes
   '(limits vacation shift booking efficiency journalentry rate
-	   workinghours flags)
+	   workinghours flags chargeset)
   "Valid attributes for Taskjuggler resources.
 If one of these appears as a property for a headline, it will be
 exported with the corresponding resource."
