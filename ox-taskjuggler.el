@@ -667,118 +667,115 @@ Return complete project plan as a string in TaskJuggler syntax."
      (org-taskjuggler--build-project project info)
      ;; 3. Insert global properties.
      (org-element-normalize-string org-taskjuggler-default-global-properties)
-
-     ;; ;; 3.5. Insert accounts.  Provide a default one if none is
-     ;; ;;    specified.
-     ;; (let ((main-accounts
-     ;;        ;; Collect contents from various trees marked with
-     ;;        ;; `org-taskjuggler-account-tag'.  Only gather top level
-     ;;        ;; accounts.
-     ;;        (apply 'append
-     ;;               (org-element-map tree 'headline
-     ;;                 (lambda (hl)
-     ;;                   (and (member org-taskjuggler-account-tag
-     ;;                                (org-export-get-tags hl info))
-     ;;                        (org-element-map (org-element-contents hl) 'headline
-     ;;                          'identity info nil 'headline)))
-     ;;                 info nil 'headline))))
-     ;;   ;; Assign a unique ID to each account.  Store it under
-     ;;   ;; `:taskjuggler-unique-ids' property in INFO.
-     ;;   (setq info
-     ;;         (plist-put info :taskjuggler-unique-ids
-     ;;                    (org-taskjuggler-assign-account-ids
-     ;;                     main-accounts info)))
-     ;;   (concat
-     ;;    (if main-accounts
-     ;;        (mapconcat
-     ;;         (lambda (account) (org-taskjuggler--build-account account info))
-     ;;         main-accounts "")
-     ;;      (format "account %s \"%s\" {\n}\n" (user-login-name) user-full-name))
-
-
-     ;; 4. Insert resources.  Provide a default one if none is
+     ;; 3.5. Insert accounts.  Provide a default one if none is
      ;;    specified.
-     (let ((main-resources
+     (let ((main-accounts
             ;; Collect contents from various trees marked with
-            ;; `org-taskjuggler-resource-tag'.  Only gather top level
-            ;; resources.
+            ;; `org-taskjuggler-account-tag'.  Only gather top level
+            ;; accounts.
             (apply 'append
                    (org-element-map tree 'headline
                      (lambda (hl)
-                       (and (member org-taskjuggler-resource-tag
+                       (and (member org-taskjuggler-account-tag
                                     (org-export-get-tags hl info))
                             (org-element-map (org-element-contents hl) 'headline
                               'identity info nil 'headline)))
                      info nil 'headline))))
-       ;; Assign a unique ID to each resource.  Store it under
+       ;; Assign a unique ID to each account.  Store it under
        ;; `:taskjuggler-unique-ids' property in INFO.
        (setq info
              (plist-put info :taskjuggler-unique-ids
-                        (org-taskjuggler-assign-resource-ids
-                         main-resources info)))
+                        (org-taskjuggler-assign-account-ids
+                         main-accounts info)))
        (concat
-        (if main-resources
+        (if main-accounts
             (mapconcat
-             (lambda (resource) (org-taskjuggler--build-resource resource info))
-             main-resources "")
-          (format "resource %s \"%s\" {\n}\n" (user-login-name) user-full-name))
-        ;; 5. Insert tasks.
-        (let ((main-tasks
-               ;; If `org-taskjuggler-keep-project-as-task' is
-               ;; non-nil, there is only one task.  Otherwise, every
-               ;; direct children of PROJECT is a top level task.
-               (if org-taskjuggler-keep-project-as-task (list project)
-                 (or (org-element-map (org-element-contents project) 'headline
-                       'identity info nil 'headline)
-                     (error "No task specified")))))
-          ;; Assign a unique ID to each task.  Add it to
-          ;; `:taskjuggler-unique-ids' property in INFO.
-          (setq info
-                (plist-put info :taskjuggler-unique-ids
-                           (append
-                            (org-taskjuggler-assign-task-ids main-tasks info)
-                            (plist-get info :taskjuggler-unique-ids))))
-          ;; If no resource is allocated among tasks, allocate one to
-          ;; the first task.
-          (unless (org-element-map main-tasks 'headline
-                    (lambda (task) (org-element-property :ALLOCATE task))
-                    info t)
-            (org-element-put-property
-             (car main-tasks) :ALLOCATE
-             (or (org-taskjuggler-get-id (car main-resources) info)
-                 (user-login-name))))
-          (mapconcat
-           (lambda (task) (org-taskjuggler--build-task task info))
-           main-tasks ""))
-        ;; 6. Insert reports.  If no report is defined, insert default
-        ;;    reports.
-        (let ((main-reports
+             (lambda (account) (org-taskjuggler--build-account account info))
+             main-accounts "")
+          (format "account %s \"%s\" {\n}\n" (user-login-name) user-full-name))
+        ;; 4. Insert resources.  Provide a default one if none is
+        ;;    specified.
+        (let ((main-resources
                ;; Collect contents from various trees marked with
-               ;; `org-taskjuggler-report-tag'.  Only gather top level
-               ;; reports.
+               ;; `org-taskjuggler-resource-tag'.  Only gather top level
+               ;; resources.
                (apply 'append
                       (org-element-map tree 'headline
                         (lambda (hl)
-                          (and (member org-taskjuggler-report-tag
+                          (and (member org-taskjuggler-resource-tag
                                        (org-export-get-tags hl info))
-                               (org-element-map (org-element-contents hl)
-                                   'headline 'identity info nil 'headline)))
+                               (org-element-map (org-element-contents hl) 'headline
+                                 'identity info nil 'headline)))
                         info nil 'headline))))
-          (if main-reports
-              (mapconcat
-               (lambda (report) (org-taskjuggler--build-report report info))
-               main-reports "")
-	    ;; insert title in default reports
-	    (let* ((title (org-export-data (plist-get info :title) info))
-		   (report-title (if (string= title "")
-				     (org-taskjuggler-get-name project)
-				   title)))
-	      (mapconcat
-	       'org-element-normalize-string
-	       (mapcar
-		(lambda (report)
-		  (replace-regexp-in-string "%title" report-title  report t t))
-		org-taskjuggler-default-reports) "")))))))))
+          ;; Assign a unique ID to each resource.  Store it under
+          ;; `:taskjuggler-unique-ids' property in INFO.
+          (setq info
+                (plist-put info :taskjuggler-unique-ids
+                           (org-taskjuggler-assign-resource-ids
+                            main-resources info)))
+          (concat
+           (if main-resources
+               (mapconcat
+                (lambda (resource) (org-taskjuggler--build-resource resource info))
+                main-resources "")
+             (format "resource %s \"%s\" {\n}\n" (user-login-name) user-full-name))
+           ;; 5. Insert tasks.
+           (let ((main-tasks
+                  ;; If `org-taskjuggler-keep-project-as-task' is
+                  ;; non-nil, there is only one task.  Otherwise, every
+                  ;; direct children of PROJECT is a top level task.
+                  (if org-taskjuggler-keep-project-as-task (list project)
+                    (or (org-element-map (org-element-contents project) 'headline
+                          'identity info nil 'headline)
+                        (error "No task specified")))))
+             ;; Assign a unique ID to each task.  Add it to
+             ;; `:taskjuggler-unique-ids' property in INFO.
+             (setq info
+                   (plist-put info :taskjuggler-unique-ids
+                              (append
+                               (org-taskjuggler-assign-task-ids main-tasks info)
+                               (plist-get info :taskjuggler-unique-ids))))
+             ;; If no resource is allocated among tasks, allocate one to
+             ;; the first task.
+             (unless (org-element-map main-tasks 'headline
+                       (lambda (task) (org-element-property :ALLOCATE task))
+                       info t)
+               (org-element-put-property
+                (car main-tasks) :ALLOCATE
+                (or (org-taskjuggler-get-id (car main-resources) info)
+                    (user-login-name))))
+             (mapconcat
+              (lambda (task) (org-taskjuggler--build-task task info))
+              main-tasks ""))
+           ;; 6. Insert reports.  If no report is defined, insert default
+           ;;    reports.
+           (let ((main-reports
+                  ;; Collect contents from various trees marked with
+                  ;; `org-taskjuggler-report-tag'.  Only gather top level
+                  ;; reports.
+                  (apply 'append
+                         (org-element-map tree 'headline
+                           (lambda (hl)
+                             (and (member org-taskjuggler-report-tag
+                                          (org-export-get-tags hl info))
+                                  (org-element-map (org-element-contents hl)
+                                      'headline 'identity info nil 'headline)))
+                           info nil 'headline))))
+             (if main-reports
+                 (mapconcat
+                  (lambda (report) (org-taskjuggler--build-report report info))
+                  main-reports "")
+	       ;; insert title in default reports
+	       (let* ((title (org-export-data (plist-get info :title) info))
+		      (report-title (if (string= title "")
+				        (org-taskjuggler-get-name project)
+				      title)))
+	         (mapconcat
+	          'org-element-normalize-string
+	          (mapcar
+		   (lambda (report)
+		     (replace-regexp-in-string "%title" report-title  report t t))
+		   org-taskjuggler-default-reports) "")))))))))))
 
 (defun org-taskjuggler--build-project (project info)
   "Return a project declaration.
