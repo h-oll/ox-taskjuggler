@@ -177,6 +177,13 @@ for the project."
   :group 'org-export-taskjuggler
   :type 'string)
 
+;; (defcustom org-taskjuggler-account-tag "taskjuggler_account"
+;;   "Tag marking project's accounts.
+;; This tag is used to find the tree containing all the accounts
+;; for the project."
+;;   :group 'org-export-taskjuggler
+;;   :type 'string)
+
 (defcustom org-taskjuggler-report-tag "taskjuggler_report"
   "Tag marking project's reports.
 This tag is used to find the tree containing all the reports for
@@ -334,8 +341,16 @@ If one of these appears as a property for a headline, it will be
 exported with the corresponding resource."
   :group 'org-export-taskjuggler)
 
+;; (defcustom org-taskjuggler-valid-account-attributes
+;;   '(limits vacation shift booking efficiency journalentry rate
+;; 	   workinghours flags)
+;;   "Valid attributes for Taskjuggler accounts.
+;; If one of these appears as a property for a headline, it will be
+;; exported with the corresponding account."
+;;   :group 'org-export-taskjuggler)
+
 (defcustom org-taskjuggler-valid-report-attributes
-  '(headline columns definitions timeformat hideresource hidetask
+  '(headline columns definitions timeformat hideaccount hidetask
 	     loadunit sorttasks formats period)
   "Valid attributes for Taskjuggler reports.
 If one of these appears as a property for a headline, it will be
@@ -439,6 +454,19 @@ headlines and their associated ID."
           (push id ids)
           (cons resource id)))
       info)))
+
+;; (defun org-taskjuggler-assign-account-ids (accounts info)
+;;   "Assign a unique ID to each account within ACCOUNTS.
+;; ACCOUNTS is a list of headlines.  INFO is a plist used as a
+;; communication channel.  Return value is an alist between
+;; headlines and their associated ID."
+;;   (let (ids)
+;;     (org-element-map accounts 'headline
+;;       (lambda (account)
+;;         (let ((id (org-taskjuggler--build-unique-id account ids)))
+;;           (push id ids)
+;;           (cons account id)))
+;;       info)))
 
 
 
@@ -640,6 +668,35 @@ Return complete project plan as a string in TaskJuggler syntax."
      (org-taskjuggler--build-project project info)
      ;; 3. Insert global properties.
      (org-element-normalize-string org-taskjuggler-default-global-properties)
+
+     ;; ;; 4. Insert accounts.  Provide a default one if none is
+     ;; ;;    specified.
+     ;; (let ((main-accounts
+     ;;        ;; Collect contents from various trees marked with
+     ;;        ;; `org-taskjuggler-account-tag'.  Only gather top level
+     ;;        ;; accounts.
+     ;;        (apply 'append
+     ;;               (org-element-map tree 'headline
+     ;;                 (lambda (hl)
+     ;;                   (and (member org-taskjuggler-account-tag
+     ;;                                (org-export-get-tags hl info))
+     ;;                        (org-element-map (org-element-contents hl) 'headline
+     ;;                          'identity info nil 'headline)))
+     ;;                 info nil 'headline))))
+     ;;   ;; Assign a unique ID to each account.  Store it under
+     ;;   ;; `:taskjuggler-unique-ids' property in INFO.
+     ;;   (setq info
+     ;;         (plist-put info :taskjuggler-unique-ids
+     ;;                    (org-taskjuggler-assign-account-ids
+     ;;                     main-accounts info)))
+     ;;   (concat
+     ;;    (if main-accounts
+     ;;        (mapconcat
+     ;;         (lambda (account) (org-taskjuggler--build-account account info))
+     ;;         main-accounts "")
+     ;;      (format "account %s \"%s\" {\n}\n" (user-login-name) user-full-name))
+
+
      ;; 4. Insert resources.  Provide a default one if none is
      ;;    specified.
      (let ((main-resources
@@ -784,6 +841,39 @@ neither is defined a unique id will be associated to it."
      ""))
    ;; Closing resource.
    "}\n"))
+
+;; (defun org-taskjuggler--build-account (account info)
+;;   "Return a account declaration.
+
+;; ACCOUNT is a headline.  INFO is a plist used as a communication
+;; channel.
+
+;; All valid attributes from ACCOUNT are inserted.  If ACCOUNT
+;; defines a property \"account_id\" it will be used as the id for
+;; this account.  Otherwise it will use the ID property.  If
+;; neither is defined a unique id will be associated to it."
+;;   (concat
+;;    ;; Opening account.
+;;    (format "account %s \"%s\" {\n"
+;;            (org-taskjuggler--clean-id
+;;             (or (org-element-property :ACCOUNT_ID account)
+;;                 (org-element-property :ID account)
+;;                 (org-taskjuggler-get-id account info)))
+;;            (org-taskjuggler-get-name account))
+;;    ;; Add attributes.
+;;    (org-taskjuggler--indent-string
+;;     (org-taskjuggler--build-attributes
+;;      account org-taskjuggler-valid-account-attributes))
+;;    ;; Add inner accounts.
+;;    (org-taskjuggler--indent-string
+;;     (mapconcat
+;;      'identity
+;;      (org-element-map (org-element-contents account) 'headline
+;;        (lambda (hl) (org-taskjuggler--build-account hl info))
+;;        info nil 'headline)
+;;      ""))
+;;    ;; Closing account.
+;;    "}\n"))
 
 (defun org-taskjuggler--build-report (report info)
   "Return a report declaration.
