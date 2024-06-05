@@ -1,4 +1,4 @@
-;;; ox-taskjuggler.el --- TaskJuggler Back-End for Org Export Engine  -*- lexical-binding: t; -*-
+;;; ox-taskjuggler.el --- TaskJuggler Back-End for Org Export Engine
 ;;
 ;; Copyright (C) 2007-2021 Free Software Foundation, Inc.
 ;;
@@ -145,7 +145,7 @@
 ;;
 ;;; Code:
 
-(eval-when-compile (require 'cl-lib))
+(eval-when-compile (require 'cl))
 
 (require 'ox)
 
@@ -318,22 +318,20 @@ exported with the corresponding task.
 
 Note that multiline properties are not supported, so attributes
 like note or journalentry have to be on a single line."
-  :group 'org-export-taskjuggler
-  :type '(repeat symbol))
+  :group 'org-export-taskjuggler)
 
 (defcustom org-taskjuggler-valid-project-attributes
-  '( timingresolution timezone alertlevels currency currencyformat
-     dailyworkinghours extend includejournalentry now numberformat
-     outputdir scenario shorttimeformat timeformat trackingscenario
-     weekstartsmonday weekstartssunday workinghours
-     yearlyworkingdays)
+  '(timingresolution timezone alertlevels currency currencyformat
+  dailyworkinghours extend includejournalentry now numberformat
+  outputdir scenario shorttimeformat timeformat trackingscenario
+  weekstartsmonday weekstartssunday workinghours
+  yearlyworkingdays)
   "Valid attributes for Taskjuggler project.
 If one of these appears as a property for a headline that is a
 project definition, it will be exported with the corresponding
-task.  Attribute `timingresolution' should be the first in the
+task. Attribute 'timingresolution' should be the first in the
 list."
-  :group 'org-export-taskjuggler
-  :type '(repeat symbol))
+  :group 'org-export-taskjuggler)
 
 (defcustom org-taskjuggler-valid-resource-attributes
   '(limits vacation shift booking efficiency journalentry rate
@@ -341,8 +339,7 @@ list."
   "Valid attributes for Taskjuggler resources.
 If one of these appears as a property for a headline, it will be
 exported with the corresponding resource."
-  :group 'org-export-taskjuggler
-  :type '(repeat symbol))
+  :group 'org-export-taskjuggler)
 
 (defcustom org-taskjuggler-valid-account-attributes
   '(aggregate credits flags)
@@ -357,8 +354,7 @@ exported with the corresponding account."
   "Valid attributes for Taskjuggler reports.
 If one of these appears as a property for a headline, it will be
 exported with the corresponding report."
-  :group 'org-export-taskjuggler
-  :type '(repeat symbol))
+  :group 'org-export-taskjuggler)
 
 (defcustom org-taskjuggler-process-command
   "tj3 --silent --no-color --output-dir %o %f"
@@ -370,8 +366,7 @@ full file name, \"%o\" by the reports directory (see
 
 If you are targeting Taskjuggler 2.4 (see
 `org-taskjuggler-target-version') this setting is ignored."
-  :group 'org-export-taskjuggler
-  :type 'string)
+  :group 'org-export-taskjuggler)
 
 (defcustom org-taskjuggler-reports-directory "reports"
   "Default directory to generate the Taskjuggler reports in.
@@ -384,8 +379,7 @@ doesn't exist.
 
 If you are targeting Taskjuggler 2.4 (see
 `org-taskjuggler-target-version') this setting is ignored."
-  :group 'org-export-taskjuggler
-  :type 'string)
+  :group 'org-export-taskjuggler)
 
 (defcustom org-taskjuggler-keep-project-as-task t
   "Non-nil keeps the project headline as an umbrella task for all tasks.
@@ -511,11 +505,7 @@ ITEM is a headline.  Return value is a string or nil if ITEM
 doesn't have any start date defined."
   (let ((scheduled (org-element-property :scheduled item)))
     (or
-     (and scheduled (funcall (eval-and-compile
-			       (if (fboundp 'org-format-timestamp)
-				   #'org-format-timestamp
-				 (with-no-warnings #'org-timestamp-format)))
-			     scheduled "%Y-%02m-%02d"))
+     (and scheduled (org-timestamp-format scheduled "%Y-%02m-%02d"))
      (and (memq 'start org-taskjuggler-valid-task-attributes)
 	  (org-element-property :START item)))))
 
@@ -666,9 +656,9 @@ doesn't include leading \"depends\"."
 
 ;;; Translator Functions
 
-(defun org-taskjuggler-project-plan (_ info)
+(defun org-taskjuggler-project-plan (contents info)
   "Build TaskJuggler project plan.
-INFO is a plist holding export options.
+CONTENTS is ignored.  INFO is a plist holding export options.
 Return complete project plan as a string in TaskJuggler syntax."
   (let* ((tree (plist-get info :parse-tree))
          (project (or (org-taskjuggler-get-project info)
