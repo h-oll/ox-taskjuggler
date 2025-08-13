@@ -694,8 +694,7 @@ Return complete project plan as a string in TaskJuggler syntax."
         (if main-accounts
             (mapconcat
              (lambda (account) (org-taskjuggler--build-account account info))
-             main-accounts "")
-          (format "account %s \"%s\" {\n}\n" (user-login-name) user-full-name))
+             main-accounts ""))
         ;; 4. Insert resources.  Provide a default one if none is
         ;;    specified.
         (let ((main-resources
@@ -720,8 +719,7 @@ Return complete project plan as a string in TaskJuggler syntax."
            (if main-resources
                (mapconcat
                 (lambda (resource) (org-taskjuggler--build-resource resource info))
-                main-resources "")
-             (format "resource %s \"%s\" {\n}\n" (user-login-name) user-full-name))
+                main-resources ""))
            ;; 5. Insert tasks.
            (let ((main-tasks
                   ;; If `org-taskjuggler-keep-project-as-task' is
