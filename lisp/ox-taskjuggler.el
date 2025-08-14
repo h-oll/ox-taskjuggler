@@ -778,7 +778,10 @@ days from now."
   (concat
    ;; Opening project.
    (format "project %s \"%s\" \"%s\" %s %s {\n"
-	   (org-taskjuggler-get-id project info)
+           (or (org-element-property :ID project)
+               (org-element-property :CUSTOM_ID project)
+               (org-element-property :TJ_ID project)
+               (org-element-property :PROJECT_ID project))
 	   (org-taskjuggler-get-name project)
 	   ;; Version is obtained through :TASKJUGGLER_VERSION:
 	   ;; property or `org-taskjuggler-default-project-version'.
