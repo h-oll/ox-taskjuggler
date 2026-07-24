@@ -308,7 +308,7 @@ but before any resource and task declarations."
   :type '(string :tag "Preamble"))
 
 (defcustom org-taskjuggler-valid-task-attributes
-  '(account start note duration endbuffer endcredit end
+  '(account note duration endbuffer endcredit
 	    flags journalentry length limits maxend maxstart minend
 	    minstart period reference responsible scheduling
 	    startbuffer startcredit statusnote chargeset charge)
@@ -506,8 +506,7 @@ doesn't have any start date defined."
   (let ((scheduled (org-element-property :scheduled item)))
     (or
      (and scheduled (org-timestamp-format scheduled "%Y-%02m-%02d"))
-     (and (memq 'start org-taskjuggler-valid-task-attributes)
-	  (org-element-property :START item)))))
+     (org-element-property :START item))))
 
 (defun org-taskjuggler-get-end (item)
   "Return end date for task or resource ITEM.
@@ -516,8 +515,7 @@ doesn't have any end date defined."
   (let ((deadline (org-element-property :deadline item)))
     (or
      (and deadline (org-timestamp-format deadline "%Y-%02m-%02d"))
-     (and (memq 'end org-taskjuggler-valid-task-attributes)
-	  (org-element-property :END item)))))
+     (org-element-property :END item))))
 
 
 
@@ -929,7 +927,9 @@ a unique id will be associated to it."
           (let ((pri (org-element-property :priority task)))
             (and pri
                  (max 1 (/ (* 1000 (- org-priority-lowest pri))
-                           (- org-priority-lowest org-priority-highest)))))))
+                           (- org-priority-lowest org-priority-highest))))))
+	 (start (org-taskjuggler-get-start task))
+	 (end (org-taskjuggler-get-end task)))
     (concat
      ;; Opening task.
      (format "task %s \"%s\" {\n"
@@ -949,6 +949,8 @@ a unique id will be associated to it."
      (and effort (format "  effort %s\n" effort))
      (and priority (format "  priority %s\n" priority))
      (and milestone "  milestone\n")
+     (and start (format "  start %s\n" start))
+     (and end (format "  end %s\n" end))
      ;; Add other valid attributes.
      (org-taskjuggler--indent-string
       (org-taskjuggler--build-attributes
